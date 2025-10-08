@@ -1,17 +1,33 @@
-# Use an official Python runtime as the base image
+# Use slim Python image
 FROM python:3.10-slim
 
-# Set the working directory inside the container
+# Set working directory
 WORKDIR /app
 
-# Copy the current directory contents into the container
-COPY . .
+# Copy requirements first for caching
+COPY requirements.txt .
 
-# Install dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies in a virtualenv
+RUN python -m venv /opt/venv && \
+    /opt/venv/bin/pip install --no-cache-dir -r requirements.txt
 
-# Expose the container’s port 5000
+# Copy app code
+COPY app.py .
+
+# Create non-root user
+RUN useradd -ms /bin/bash appuser
+
+# Set ownership and permissions
+RUN chown -R appuser:appuser /app && chmod -R 755 /app
+
+# Set environment PATH for virtualenv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Run as non-root user
+USER appuser
+
+# Expose port
 EXPOSE 5000
 
-# Run the Flask app
+# Default command
 CMD ["python", "app.py"]
