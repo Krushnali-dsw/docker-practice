@@ -1,4 +1,4 @@
-name: Build and Push Docker Image
+name: Build and Push Secure Docker Image
 
 on:
   push:
@@ -24,4 +24,4 @@ jobs:
       with:
         context: ./python
         push: true
-        tags: ${{ secrets.DOCKER_USERNAME }}/flask_docker_app:latest
+        tags: ${{ secrets.DOCKER_USERNAME }}/secure-flask-app:latest
