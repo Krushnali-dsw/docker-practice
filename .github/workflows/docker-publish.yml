@@ -31,8 +31,32 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Docker meta
-      id: meta
+    # ========================================
+    # Build DEBUG image (for owner - with bash)
+    # ========================================
+    - name: Docker meta for debug image
+      id: meta-debug
+      uses: docker/metadata-action@v5
+      with:
+        images: ${{ secrets.DOCKER_USERNAME }}/secure-flask-app
+        tags: |
+          type=raw,value=debug
+          type=raw,value=${{ steps.version.outputs.version }}-debug
+
+    - name: Build and push DEBUG image (with bash access)
+      uses: docker/build-push-action@v6
+      with:
+        context: ./python
+        target: debug
+        push: true
+        tags: ${{ steps.meta-debug.outputs.tags }}
+        labels: ${{ steps.meta-debug.outputs.labels }}
+
+    # ========================================
+    # Build PRODUCTION image (for public - no bash)
+    # ========================================
+    - name: Docker meta for production image
+      id: meta-prod
       uses: docker/metadata-action@v5
       with:
         images: ${{ secrets.DOCKER_USERNAME }}/secure-flask-app
@@ -41,10 +65,11 @@ jobs:
           type=raw,value=${{ steps.version.outputs.version }}
           type=raw,value=${{ steps.version.outputs.version }}-${{ steps.version.outputs.sha }}
 
-    - name: Build and push Docker image
+    - name: Build and push PRODUCTION image (no bash - secure!)
       uses: docker/build-push-action@v6
       with:
         context: ./python
+        target: production
         push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
+        tags: ${{ steps.meta-prod.outputs.tags }}
+        labels: ${{ steps.meta-prod.outputs.labels }}

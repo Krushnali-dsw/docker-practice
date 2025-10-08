@@ -1,7 +1,8 @@
-# Use slim Python image
-FROM python:3.10-slim
+# ========================================
+# Stage 1: BUILDER (Shared dependencies)
+# ========================================
+FROM python:3.10-slim AS builder
 
-# Set working directory
 WORKDIR /app
 
 # Copy requirements first for caching
@@ -14,20 +15,48 @@ RUN python -m venv /opt/venv && \
 # Copy app code
 COPY app.py .
 
-# Create non-root user
-RUN useradd -ms /bin/bash appuser
+# ========================================
+# Stage 2: DEBUG IMAGE (For Owner - HAS BASH!)
+# ========================================
+FROM python:3.10-slim AS debug
 
-# Set ownership and permissions
-RUN chown -R appuser:appuser /app && chmod -R 755 /app
+WORKDIR /app
 
-# Set environment PATH for virtualenv
+# Copy virtualenv and app from builder stage
+COPY --from=builder /opt/venv /opt/venv
+COPY --from=builder /app/app.py /app/
+
+# Set environment
 ENV PATH="/opt/venv/bin:$PATH"
+ENV PYTHONPATH="/app"
 
-# Run as non-root user
+# Create non-root user but keep bash available
+RUN useradd -ms /bin/bash appuser && \
+    chown -R appuser:appuser /app
+
 USER appuser
 
-# Expose port
+EXPOSE 5000
+CMD ["python", "app.py"]
+
+# ========================================
+# Stage 3: PRODUCTION IMAGE (For Public - NO BASH!)
+# ========================================
+FROM gcr.io/distroless/python3-debian11:nonroot AS production
+
+WORKDIR /app
+
+# Copy the virtualenv from builder stage
+COPY --from=builder /opt/venv /opt/venv
+
+# Copy app code from builder stage
+COPY --from=builder /app/app.py /app/
+
+# Set environment to find Python packages
+ENV PYTHONPATH="/opt/venv/lib/python3.10/site-packages:/app"
+
+# Already running as non-root (nonroot user from distroless)
 EXPOSE 5000
 
-# Default command
-CMD ["python", "app.py"]
+# NO SHELL ACCESS POSSIBLE!
+ENTRYPOINT ["python", "/app/app.py"]
