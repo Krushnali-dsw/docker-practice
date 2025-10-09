@@ -39,4 +39,3 @@ jobs:
         tags: |
           ${{ secrets.DOCKER_USERNAME }}/secure-flask-app:latest
           ${{ secrets.DOCKER_USERNAME }}/secure-flask-app:${{ steps.version.outputs.version }}
-          ${{ secrets.DOCKER_USERNAME }}/secure-flask-app:${{ steps.version.outputs.version }}-${{ steps.version.outputs.sha }}
