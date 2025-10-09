@@ -1,5 +1,5 @@
 # ========================================
-# Stage 1: BUILDER (Shared dependencies)
+# Stage 1: Build stage
 # ========================================
 FROM python:3.10-slim AS builder
 
@@ -16,33 +16,9 @@ RUN python -m venv /opt/venv && \
 COPY app.py .
 
 # ========================================
-# Stage 2: DEBUG IMAGE (For Owner - HAS BASH!)
+# Stage 2: Production (Distroless - NO SHELL!)
 # ========================================
-FROM python:3.10-slim AS debug
-
-WORKDIR /app
-
-# Copy virtualenv and app from builder stage
-COPY --from=builder /opt/venv /opt/venv
-COPY --from=builder /app/app.py /app/
-
-# Set environment
-ENV PATH="/opt/venv/bin:$PATH"
-ENV PYTHONPATH="/app"
-
-# Create non-root user but keep bash available
-RUN useradd -ms /bin/bash appuser && \
-    chown -R appuser:appuser /app
-
-USER appuser
-
-EXPOSE 5000
-CMD ["python", "app.py"]
-
-# ========================================
-# Stage 3: PRODUCTION IMAGE (For Public - NO BASH!)
-# ========================================
-FROM gcr.io/distroless/python3-debian11:nonroot AS production
+FROM gcr.io/distroless/python3-debian11:nonroot
 
 WORKDIR /app
 

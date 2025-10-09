@@ -31,30 +31,12 @@ jobs:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_PASSWORD }}
 
-    # ========================================
-    # Build DEBUG image (for owner - with bash)
-    # ========================================
-    - name: Build and push DEBUG image (with bash access)
+    - name: Build and push secure distroless image
       uses: docker/build-push-action@v6
       with:
         context: ./python
-        target: debug
-        push: true
-        tags: |
-          ${{ secrets.DOCKER_USERNAME }}/secure-flask-app:debug
-          ${{ secrets.DOCKER_USERNAME }}/secure-flask-app:${{ steps.version.outputs.version }}-debug
-
-    # ========================================
-    # Build PRODUCTION image (for public - no bash)
-    # ========================================
-    - name: Build and push PRODUCTION image (no bash - secure!)
-      uses: docker/build-push-action@v6
-      with:
-        context: ./python
-        target: production
         push: true
         tags: |
           ${{ secrets.DOCKER_USERNAME }}/secure-flask-app:latest
-          ${{ secrets.DOCKER_USERNAME }}/secure-flask-app:prod
           ${{ secrets.DOCKER_USERNAME }}/secure-flask-app:${{ steps.version.outputs.version }}
-          ${{ secrets.DOCKER_USERNAME }}/secure-flask-app:${{ steps.version.outputs.version }}-prod
+          ${{ secrets.DOCKER_USERNAME }}/secure-flask-app:${{ steps.version.outputs.version }}-${{ steps.version.outputs.sha }}
